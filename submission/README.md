@@ -1,88 +1,193 @@
-# Day 19 Lab — Self-Grading Rubric
+# Day 19 Lab Submission — Nguyễn Tuấn Phong (2A202601038)
 
-**Họ Tên:** Nguyễn Tuấn Phong | **MSSV:** 2A202601038 | **Path:** Lite
+## 📋 Tổng quan
 
----
-
-## Core — NB1–NB4 (100 pts)
-
-| # | Tiêu chí | Pts tối đa | Tự chấm | Ghi chú |
-|---|----------|------------|---------|---------|
-| 1 | NB1: `client.count("lab19").count == 1000` | 5 | **5** | ✅ |
-| 1 | NB1: Top-5 results visible (cell §5) | 5 | **5** | ✅ |
-| 1 | NB1: Paraphrase query → `cloud` cluster | 10 | **10** | ✅ |
-| 2 | NB2: `search_hybrid` RRF formula đúng `1/(k+rank)`, rank 1-based | 10 | **10** | ✅ |
-| 2 | NB2: Precision@10: hybrid > kw AND hybrid > sem | 10 | **10** | ✅ |
-| 2 | NB2: Slice table: hybrid wins `mixed`, vector wins `paraphrase`, BM25 wins `exact` | 5 | **5** | ✅ |
-| 3 | NB3: API trả `SearchResponse` với `latency_ms` | 5 | **5** | ✅ |
-| 3 | NB3: Bảng P50/P95/P99 server-side cho 3 modes | 10 | **10** | ✅ |
-| 3 | NB3: Hybrid P99 < 50ms sau warm-up | 10 | **10** | ✅ (5.8ms) |
-| 4 | NB4: `feast apply` — 3 feature views registered | 5 | **5** | ✅ |
-| 4 | NB4: `materialize-incremental` — rows materialized | 5 | **5** | ✅ |
-| 4 | NB4: `get_online_features()` cho `u_001` | 5 | **5** | ✅ |
-| 4 | NB4: 100-call P99 reported | 5 | **5** | ✅ |
-| 4 | NB4: PIT join trả về 3 rows × N features | 5 | **5** | ✅ |
-| — | Reproducible: `make benchmark` chạy được | 5 | **5** | ✅ |
-| | **Core total** | **100** | **100** | |
+- **Họ Tên:** Nguyễn Tuấn Phong
+- **MSSV:** 2A202601038
+- **Lớp:** E403, K3B
+- **Path:** Lite (fastembed + Qdrant in-memory + SQLite Feast)
+- **Tests:** 41/41 PASSED ✅
+- **Notebooks:** 8/8 completed với outputs
 
 ---
 
-## Advanced — NB5–NB8 (50 pts)
+## 🏆 Phần Core — NB1–NB4 (100 điểm)
 
-| # | Tiêu chí | Pts tối đa | Tự chấm | Ghi chú |
-|---|----------|------------|---------|---------|
-| 5 | NB5: post-filter giảm recall, filtered-ANN giữ 1.00 | 5 | **5** | ✅ |
-| 5 | NB5: `fetch_k` ≈ 50% corpus mới cứu recall | 5 | **5** | ✅ |
-| 6 | NB6: 3 chiến lược cùng 16 doc; agentic > single-shot | 5 | **5** | ✅ |
-| 6 | NB6: Giải thích `agentic (+filter)` < `agentic (no filter)` | 4 | **4** | ✅ |
-| 6 | NB6: `build_context()` in feature + doc_ids | 3 | **3** | ✅ |
-| 7 | NB7: Bảng sweep: tiết kiệm + trả lời sai | 5 | **5** | ✅ |
-| 7 | NB7: Chọn ngưỡng + giải thích 0.75 chưa đủ | 4 | **4** | ✅ |
-| 7 | NB7: Tenant leak: leak khi `False`, MISS khi `True` | 3 | **3** | ✅ |
-| 8 | NB8: Leakage gap > 0.30 trên `session_id` | 4 | **4** | ✅ (gap 0.477) |
-| 8 | NB8: PIT vs latest: % dòng rò + AUC diff | 4 | **4** | ✅ |
-| 8 | NB8: ODFV: cùng user, hai amount → hai ratio | 4 | **4** | ✅ |
-| 8 | `make test` và `make verify-lite` xanh | 4 | **4** | ✅ |
-| | **Advanced total** | **50** | **50** | |
+### NB1 — Embeddings & Vector Indexing (30 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| `client.count("lab19") == 1000` | 5 | ✅ |
+| Top-5 results visible cho keyword query | 5 | ✅ |
+| Paraphrase query trả về đúng `cloud` cluster | 10 | ✅ |
+
+**Screenshot:**
+![NB1](screenshots/NB1.png)
 
 ---
 
-## Bonus (20 pts)
+### NB2 — Hybrid Search BM25 + Vector + RRF (25 điểm)
 
-| Tiêu chí | Pts tối đa | Tự chấm | Ghi chú |
-|----------|------------|---------|---------|
-| `bonus/ARCHITECTURE.md` ≥600 words + diagram | 3 | **3** | ✅ |
-| 3 decisions với explicit tradeoff | 6 | **6** | ✅ |
-| Vietnamese-context awareness | 2 | **2** | ✅ |
-| Rejected alternative với reason | 2 | **2** | ✅ |
-| `bonus/agent.py` chạy được | 4 | **4** | ✅ |
-| `bonus/demo.py` exits 0 + 5 queries | 3 | **3** | ✅ |
-| **Bonus total** | **20** | **20** | |
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| `search_hybrid` implement đúng RRF formula `1/(k+rank)` | 10 | ✅ |
+| Precision@10: hybrid > keyword AND hybrid > semantic | 10 | ✅ |
+| Slice table: hybrid wins `mixed`, vector wins `paraphrase`, BM25 wins `exact` | 5 | ✅ |
+
+**Screenshot:**
+![NB2](screenshots/NB2.png)
 
 ---
 
-## Tổng kết
+### NB3 — FastAPI `/search` Endpoint + Latency Benchmark (25 điểm)
 
-| Phần | Tối đa | Đạt |
-|------|---------|------|
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| API trả về valid `SearchResponse` với `latency_ms` | 5 | ✅ |
+| Bảng P50/P95/P99 cho 3 modes (server-side) | 10 | ✅ |
+| Hybrid P99 server-side < 50ms (sau warm-up) | 10 | ✅ |
+
+**Screenshot:**
+![NB3](screenshots/NB3.png)
+
+---
+
+### NB4 — Feast Feature Store (20 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| `feast apply` thành công — 3 feature views registered | 5 | ✅ |
+| `materialize-incremental` thành công — rows materialized | 5 | ✅ |
+| `get_online_features()` trả về valid dict cho `u_001` | 5 | ✅ |
+| 100-call P99 reported | 5 | ✅ |
+| PIT join via `get_historical_features()` trả về 3 rows × N features | 5 | ✅ |
+
+**Screenshot:**
+![NB4](screenshots/NB4.png)
+
+---
+
+## 🚀 Phần Nâng cao — NB5–NB8 (50 điểm)
+
+### NB5 — Filtered Search (10 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| Bảng recall: post-filter giảm rõ khi filter chặt | 5 | ✅ |
+| Over-fetch ladder: `fetch_k` ≈ 50% corpus mới cứu recall | 5 | ✅ |
+
+**Screenshot:**
+![NB5](screenshots/NB5.png)
+
+---
+
+### NB6 — Agent Retrieval (12 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| Bảng 3 chiến lược cùng ngân sách 16 doc; agentic > single-shot | 5 | ✅ |
+| Giải thích được tại sao `agentic (+filter)` thấp hơn `agentic (no filter)` | 4 | ✅ |
+| `build_context()` chạy được, in cả feature + doc_ids | 3 | ✅ |
+
+**Screenshot:**
+![NB6](screenshots/NB6.png)
+
+---
+
+### NB7 — Semantic Cache (12 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| Bảng sweep có cả hai cột: tiết kiệm và trả lời sai | 5 | ✅ |
+| Chọn được ngưỡng có lý + giải thích tại sao 0,75 chưa đủ | 4 | ✅ |
+| Demo rò chéo tenant: leak khi `namespaced=False`, MISS khi `True` | 3 | ✅ |
+
+**Screenshot:**
+![NB7](screenshots/NB7.png)
+
+---
+
+### NB8 — Feature Engineering (16 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| Bảng leakage: `target-naive` gap > 0.30 trên `session_id` | 4 | ✅ |
+| PIT vs latest join: báo cáo % dòng rò + chênh lệch AUC | 4 | ✅ |
+| On-demand feature view: cùng user, hai `amount` → hai `amount_vs_avg` | 4 | ✅ |
+| `make test` và `make verify-lite` đều xanh | 4 | ✅ |
+
+**Screenshot:**
+![NB8](screenshots/NB8.png)
+
+---
+
+## 🎁 Bonus Challenge (20 điểm)
+
+| Tiêu chí | Điểm | Trạng thái |
+|----------|-------|------------|
+| `bonus/ARCHITECTURE.md` tồn tại, ≥600 words + architecture diagram | 3 | ✅ |
+| 3 architecture decisions với tradeoff explicit (X vs Y, why X) | 6 | ✅ |
+| Vietnamese-context awareness | 2 | ✅ |
+| Rejected alternative explicitly named với reason | 2 | ✅ |
+| `bonus/agent.py` chạy được (`HybridMemoryAgent.remember()` + `.recall()`) | 4 | ✅ |
+| `bonus/demo.py` exits 0 với 5 query outputs | 3 | ✅ |
+
+**Files:**
+- `bonus/ARCHITECTURE.md` — Kiến trúc Hybrid Memory với diagram + tradeoffs
+- `bonus/agent.py` — HybridMemoryAgent class (Qdrant episodic + Feast semantic)
+- `bonus/demo.py` — 5-query demo script
+
+---
+
+## 📊 Tổng điểm tự chấm
+
+| Phần | Tối đa | Đạt được |
+|------|---------|-----------|
 | Core (NB1–NB4) | 100 | **100** |
-| Advanced (NB5–NB8) | 50 | **50** |
+| Nâng cao (NB5–NB8) | 50 | **50** |
 | Bonus | 20 | **20** |
 | **Tổng** | **170** | **170** |
 
 ---
 
-## Screenshots
+## ✅ Verification Commands
 
-| Notebook | Screenshot |
-|----------|------------|
-| NB1 — Embeddings | ![NB1](screenshots/NB1.png) |
-| NB2 — Hybrid Search | ![NB2](screenshots/NB2.png) |
-| NB3 — API Benchmark | ![NB3](screenshots/NB3.png) |
-| NB4 — Feast | ![NB4](screenshots/NB4.png) |
-| NB5 — Filtered Search | ![NB5](screenshots/NB5.png) |
-| NB6 — Agent | ![NB6](screenshots/NB6.png) |
-| NB7 — Cache | ![NB7](screenshots/NB7.png) |
-| NB8 — Features | ![NB8](screenshots/NB8.png) |
-| `make benchmark` | ![benchmark](screenshots/make%20benchmark.png) |
-| `make test` | ![test](screenshots/make%20test.png) |
+```bash
+# Tests
+python3 -m pytest tests -q
+# 41 passed ✅
+
+# Benchmark
+python3 -c "from scripts.benchmark import *; main()"
+# Precision@10 + Latency table ✅
+
+# Verify lite
+python3 scripts/verify_lite.py
+# All checks PASS ✅
+```
+
+---
+
+## 📁 Cấu trúc nộp
+
+```
+submission/
+├── README.md           ← Báo cáo này
+├── REFLECTION.md       ← Reflection viết tay
+└── screenshots/
+    ├── NB1.png         ← Embeddings + Vector Index
+    ├── NB2.png         ← Hybrid Search RRF
+    ├── NB3.png         ← API Latency Benchmark
+    ├── NB4.png         ← Feast Feature Store
+    ├── NB5.png         ← Filtered Search
+    ├── NB6.png         ← Agent Retrieval
+    ├── NB7.png         ← Semantic Cache
+    ├── NB8.png         ← Feature Engineering
+    ├── make benchmark.png
+    └── make test.png
+
+bonus/
+├── ARCHITECTURE.md     ← Architecture document
+├── agent.py            ← HybridMemoryAgent
+└── demo.py             ← 5-query demo
+```
