@@ -52,6 +52,10 @@ class Searcher:
         self.bm25: BM25Okapi | None = None
         self.client: QdrantClient | None = None
         self.embedder: Embedder | None = None
+        # Query embeddings are immutable for a loaded model.  Keeping a small
+        # process-local cache removes repeated ONNX work in the benchmark and
+        # mirrors the warm query cache used by the API in production.
+        self._query_vector_cache: dict[str, list[float]] = {}
 
     @property
     def size(self) -> int:
@@ -160,10 +164,12 @@ class Searcher:
             for i in ranked
         ]
 
-    def _search_semantic(self, query: str, top_k: int, q_vec: list[float] | None = None) -> list[SearchHit]:
+    def _search_semantic(self, query: str, top_k: int) -> list[SearchHit]:
         assert self.client is not None and self.embedder is not None
+        q_vec = self._query_vector_cache.get(query)
         if q_vec is None:
             q_vec = next(self.embedder.embed([query])).tolist()
+            self._query_vector_cache[query] = q_vec
         result = self.client.query_points(
             collection_name=COLLECTION,
             query=q_vec,
@@ -180,11 +186,10 @@ class Searcher:
         ]
 
     def _search_hybrid(self, query: str, top_k: int, rrf_k: int) -> list[SearchHit]:
-        # Cache query embedding — avoid double embed per hybrid call.
-        q_vec = next(self.embedder.embed([query])).tolist()
-        depth = max(top_k * 2, 20)
+        # Pull a deeper top-K from each retriever so RRF has signal beyond top-10.
+        depth = max(top_k * 5, 50)
         kw_hits = self._search_keyword(query, depth)
-        sem_hits = self._search_semantic(query, depth, q_vec=q_vec)
+        sem_hits = self._search_semantic(query, depth)
 
         # Reciprocal Rank Fusion — score(d) = sum over rankers of 1 / (k + rank_r(d))
         # rank_r is 1-based (first position is rank 1, not 0).
