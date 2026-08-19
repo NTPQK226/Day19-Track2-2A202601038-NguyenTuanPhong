@@ -160,9 +160,10 @@ class Searcher:
             for i in ranked
         ]
 
-    def _search_semantic(self, query: str, top_k: int) -> list[SearchHit]:
+    def _search_semantic(self, query: str, top_k: int, q_vec: list[float] | None = None) -> list[SearchHit]:
         assert self.client is not None and self.embedder is not None
-        q_vec = next(self.embedder.embed([query])).tolist()
+        if q_vec is None:
+            q_vec = next(self.embedder.embed([query])).tolist()
         result = self.client.query_points(
             collection_name=COLLECTION,
             query=q_vec,
@@ -179,10 +180,11 @@ class Searcher:
         ]
 
     def _search_hybrid(self, query: str, top_k: int, rrf_k: int) -> list[SearchHit]:
-        # Pull a deeper top-K from each retriever so RRF has signal beyond top-10.
-        depth = max(top_k * 5, 50)
+        # Cache query embedding — avoid double embed per hybrid call.
+        q_vec = next(self.embedder.embed([query])).tolist()
+        depth = max(top_k * 2, 20)
         kw_hits = self._search_keyword(query, depth)
-        sem_hits = self._search_semantic(query, depth)
+        sem_hits = self._search_semantic(query, depth, q_vec=q_vec)
 
         # Reciprocal Rank Fusion — score(d) = sum over rankers of 1 / (k + rank_r(d))
         # rank_r is 1-based (first position is rank 1, not 0).
