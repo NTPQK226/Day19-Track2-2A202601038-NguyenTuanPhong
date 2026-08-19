@@ -13,12 +13,12 @@
 
 ## 🏆 Phần Core — NB1–NB4 (100 điểm)
 
-### NB1 — Embeddings & Vector Indexing (25 điểm)
+### NB1 — Embeddings & Vector Indexing (20 điểm)
 
 | Tiêu chí | Điểm | Trạng thái |
 |----------|-------|------------|
 | `client.count("lab19") == 1000` | 5 | ✅ |
-| Top-5 results visible cho keyword query | 10 | ✅ |
+| Top-5 results visible cho keyword query | 5 | ✅ |
 | Paraphrase query trả về đúng `cloud` cluster | 10 | ✅ |
 
 **Screenshot:**
